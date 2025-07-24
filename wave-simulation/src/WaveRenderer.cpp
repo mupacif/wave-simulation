@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 
 WaveRenderer::WaveRenderer() 
     : VAO(0), VBO(0), EBO(0), shaderManager(nullptr),
@@ -34,6 +35,7 @@ void WaveRenderer::generateMesh() {
         }
     }
     
+    
     // Generate indices for triangle strips
     indexCount = (GRID_SIZE - 1) * (GRID_SIZE - 1) * 6;
     indices = new unsigned int[indexCount];
@@ -59,24 +61,40 @@ void WaveRenderer::generateMesh() {
     }
 }
 
+void WaveRenderer::checkGLError(const std::string& location) {
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL error at " << location << ": " << error << std::endl;
+    }
+}
+
 void WaveRenderer::setupBuffers() {
     glGenVertexArrays(1, &VAO);
+    checkGLError("glGenVertexArrays");
     glGenBuffers(1, &VBO);
+    checkGLError("glGenBuffers VBO");
     glGenBuffers(1, &EBO);
+    checkGLError("glGenBuffers EBO");
     
     glBindVertexArray(VAO);
+    checkGLError("glBindVertexArray");
     
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, VERTEX_COUNT * 3 * sizeof(float), vertices, GL_STATIC_DRAW);
+    checkGLError("glBufferData VBO");
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    checkGLError("glBufferData EBO");
     
     // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    checkGLError("glVertexAttribPointer");
     glEnableVertexAttribArray(0);
+    checkGLError("glEnableVertexAttribArray");
     
     glBindVertexArray(0);
+    
 }
 
 bool WaveRenderer::initialize() {
@@ -135,17 +153,51 @@ void WaveRenderer::render(int screenWidth, int screenHeight) {
         0, 0, (2 * far * near) / (near - far), 0
     };
     
-    // Simple view matrix (camera looking down at the water)
+    // Camera position orbiting around the origin
     float camX = sin(time * 0.1f) * 3.0f;
     float camY = 2.0f;
     float camZ = cos(time * 0.1f) * 3.0f;
     
-    // Simplified view matrix calculation
+    // Look at the origin (0, 0, 0)
+    float lookAtX = 0.0f;
+    float lookAtY = 0.0f;
+    float lookAtZ = 0.0f;
+    
+    // Up vector
+    float upX = 0.0f;
+    float upY = 1.0f;
+    float upZ = 0.0f;
+    
+    // Calculate view matrix (lookAt)
+    // Forward vector
+    float fX = lookAtX - camX;
+    float fY = lookAtY - camY;
+    float fZ = lookAtZ - camZ;
+    float fLength = sqrt(fX*fX + fY*fY + fZ*fZ);
+    fX /= fLength;
+    fY /= fLength;
+    fZ /= fLength;
+    
+    // Right vector = forward × up
+    float rX = fY * upZ - fZ * upY;
+    float rY = fZ * upX - fX * upZ;
+    float rZ = fX * upY - fY * upX;
+    float rLength = sqrt(rX*rX + rY*rY + rZ*rZ);
+    rX /= rLength;
+    rY /= rLength;
+    rZ /= rLength;
+    
+    // Recalculate up vector = right × forward
+    float uX = rY * fZ - rZ * fY;
+    float uY = rZ * fX - rX * fZ;
+    float uZ = rX * fY - rY * fX;
+    
+    // Build view matrix
     float view[16] = {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        -camX, -camY, -camZ, 1
+        rX, uX, -fX, 0,
+        rY, uY, -fY, 0,
+        rZ, uZ, -fZ, 0,
+        -(rX*camX + rY*camY + rZ*camZ), -(uX*camX + uY*camY + uZ*camZ), fX*camX + fY*camY + fZ*camZ, 1
     };
     
     // Set uniforms
@@ -165,6 +217,11 @@ void WaveRenderer::render(int screenWidth, int screenHeight) {
     
     // Render the wave mesh
     glBindVertexArray(VAO);
+    checkGLError("glBindVertexArray before draw");
+    
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+    checkGLError("glDrawElements");
+    
     glBindVertexArray(0);
+    checkGLError("glBindVertexArray after draw");
 }

@@ -2,7 +2,9 @@
 #include <allegro5/allegro_opengl.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
+#include <GL/glext.h>
 #include <iostream>
 #include <sstream>
 #include "WaveRenderer.h"
@@ -34,7 +36,6 @@ int main(int argc, char** argv) {
         std::cerr << "Failed to create display" << std::endl;
         return -1;
     }
-    
     
     // Load font for UI
     ALLEGRO_FONT* font = al_create_builtin_font();

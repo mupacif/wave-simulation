@@ -2,7 +2,9 @@
 #define WAVE_RENDERER_H
 
 #include <allegro5/allegro.h>
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
+#include <GL/glext.h>
 #include "ShaderManager.h"
 
 class WaveRenderer {
@@ -28,6 +30,7 @@ private:
     
     void generateMesh();
     void setupBuffers();
+    void checkGLError(const std::string& location);
 
 public:
     WaveRenderer();

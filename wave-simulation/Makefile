@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -I../allegro/include -Iinclude
 LDFLAGS = -L../allegro/lib
-LIBS = -lallegro -lallegro_main -lallegro_primitives -lallegro_font -lallegro_ttf -lGL -lGLU -lGLEW
+LIBS = -lallegro -lallegro_main -lallegro_primitives -lallegro_font -lallegro_ttf -lGL -lGLU
 
 SRCDIR = src
 OBJDIR = obj
