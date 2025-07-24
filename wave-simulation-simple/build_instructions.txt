@@ -1,0 +1,50 @@
+Wave Simulation Build Instructions
+==================================
+
+This wave simulation requires Allegro 5 to be installed on your system.
+
+## Prerequisites
+
+You need to install Allegro 5 development libraries:
+
+### Ubuntu/Debian:
+```
+sudo apt-get update
+sudo apt-get install liballegro5-dev liballegro-ttf5-dev
+```
+
+### Fedora:
+```
+sudo dnf install allegro5-devel allegro5-addon-ttf-devel
+```
+
+### Arch Linux:
+```
+sudo pacman -S allegro
+```
+
+## Building
+
+Once Allegro is installed:
+```
+cd wave-simulation-simple
+make
+```
+
+## Running
+```
+./wave_simulation_simple
+```
+
+## Alternative: Docker Build
+
+If you prefer using Docker:
+```
+docker run -it --rm -v $(pwd):/app -w /app gcc:latest bash -c "apt-get update && apt-get install -y liballegro5-dev && make"
+```
+
+## Features
+- CPU-based wave simulation (no GPU/shaders required)
+- Interactive mouse click to create ripples
+- Adjustable wave parameters
+- Real-time 3D-like visualization
