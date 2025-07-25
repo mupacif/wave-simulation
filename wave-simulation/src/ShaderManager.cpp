@@ -26,11 +26,23 @@ std::string ShaderManager::readShaderFile(const std::string& filepath) {
 
 GLuint ShaderManager::compileShader(const std::string& source, GLenum shaderType) {
     GLuint shader = glCreateShader(shaderType);
+    if (shader == 0) {
+        std::cerr << "Failed to create shader" << std::endl;
+        return 0;
+    }
+    
     const char* sourceCStr = source.c_str();
     glShaderSource(shader, 1, &sourceCStr, nullptr);
     glCompileShader(shader);
     
-    checkCompileErrors(shader, shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT");
+    // Check compilation status
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        checkCompileErrors(shader, shaderType == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT");
+        glDeleteShader(shader);
+        return 0;
+    }
     
     return shader;
 }
@@ -71,20 +83,50 @@ bool ShaderManager::loadShaders(const std::string& vertexPath, const std::string
     
     // Compile shaders
     vertexShaderID = compileShader(vertexSource, GL_VERTEX_SHADER);
+    if (vertexShaderID == 0) {
+        std::cerr << "Failed to compile vertex shader" << std::endl;
+        return false;
+    }
+    
     fragmentShaderID = compileShader(fragmentSource, GL_FRAGMENT_SHADER);
+    if (fragmentShaderID == 0) {
+        std::cerr << "Failed to compile fragment shader" << std::endl;
+        glDeleteShader(vertexShaderID);
+        return false;
+    }
     
     // Create program and link shaders
     programID = glCreateProgram();
+    if (programID == 0) {
+        std::cerr << "Failed to create shader program" << std::endl;
+        glDeleteShader(vertexShaderID);
+        glDeleteShader(fragmentShaderID);
+        return false;
+    }
+    
     glAttachShader(programID, vertexShaderID);
     glAttachShader(programID, fragmentShaderID);
     glLinkProgram(programID);
     
     checkLinkErrors(programID);
     
+    // Check if linking was successful
+    GLint success;
+    glGetProgramiv(programID, GL_LINK_STATUS, &success);
+    if (!success) {
+        std::cerr << "Shader program linking failed" << std::endl;
+        glDeleteProgram(programID);
+        glDeleteShader(vertexShaderID);
+        glDeleteShader(fragmentShaderID);
+        programID = 0;
+        return false;
+    }
+    
     // Delete shaders as they're linked into the program now
     glDeleteShader(vertexShaderID);
     glDeleteShader(fragmentShaderID);
     
+    std::cout << "Shaders compiled and linked successfully" << std::endl;
     return true;
 }
 
@@ -93,17 +135,37 @@ void ShaderManager::use() const {
 }
 
 void ShaderManager::setFloat(const std::string& name, float value) const {
-    glUniform1f(glGetUniformLocation(programID, name.c_str()), value);
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location == -1) {
+        std::cerr << "Warning: uniform '" << name << "' not found" << std::endl;
+        return;
+    }
+    glUniform1f(location, value);
 }
 
 void ShaderManager::setVec2(const std::string& name, float x, float y) const {
-    glUniform2f(glGetUniformLocation(programID, name.c_str()), x, y);
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location == -1) {
+        std::cerr << "Warning: uniform '" << name << "' not found" << std::endl;
+        return;
+    }
+    glUniform2f(location, x, y);
 }
 
 void ShaderManager::setVec3(const std::string& name, float x, float y, float z) const {
-    glUniform3f(glGetUniformLocation(programID, name.c_str()), x, y, z);
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location == -1) {
+        std::cerr << "Warning: uniform '" << name << "' not found" << std::endl;
+        return;
+    }
+    glUniform3f(location, x, y, z);
 }
 
 void ShaderManager::setMat4(const std::string& name, const float* matrix) const {
-    glUniformMatrix4fv(glGetUniformLocation(programID, name.c_str()), 1, GL_FALSE, matrix);
+    GLint location = glGetUniformLocation(programID, name.c_str());
+    if (location == -1) {
+        std::cerr << "Warning: uniform '" << name << "' not found" << std::endl;
+        return;
+    }
+    glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
 }

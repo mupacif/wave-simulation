@@ -4,6 +4,10 @@
 #include <iostream>
 #include <sstream>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 WaveRenderer::WaveRenderer() 
     : VAO(0), VBO(0), EBO(0), shaderManager(nullptr),
       vertices(nullptr), indices(nullptr), indexCount(0),
@@ -35,6 +39,7 @@ void WaveRenderer::generateMesh() {
         }
     }
     
+    std::cout << "Generated " << VERTEX_COUNT << " vertices, step size: " << step << std::endl;
     
     // Generate indices for triangle strips
     indexCount = (GRID_SIZE - 1) * (GRID_SIZE - 1) * 6;
@@ -59,6 +64,8 @@ void WaveRenderer::generateMesh() {
             indices[idx++] = bottomRight;
         }
     }
+    
+    std::cout << "Generated " << indexCount << " indices for triangles" << std::endl;
 }
 
 void WaveRenderer::checkGLError(const std::string& location) {
@@ -100,9 +107,20 @@ void WaveRenderer::setupBuffers() {
 bool WaveRenderer::initialize() {
     // Create shader manager
     shaderManager = new ShaderManager();
+    
+    // Try to load wave shaders first
     if (!shaderManager->loadShaders("shaders/wave.vert", "shaders/wave.frag")) {
-        std::cerr << "Failed to load shaders" << std::endl;
-        return false;
+        std::cerr << "Failed to load wave shaders, falling back to test shaders..." << std::endl;
+        
+        // If wave shaders fail, try the test shaders
+        if (!shaderManager->loadShaders("shaders/test.vert", "shaders/test.frag")) {
+            std::cerr << "Failed to load test shaders as well" << std::endl;
+            return false;
+        } else {
+            std::cout << "Test shaders loaded successfully as fallback" << std::endl;
+        }
+    } else {
+        std::cout << "Wave shaders loaded successfully" << std::endl;
     }
     
     // Generate mesh and setup OpenGL buffers
@@ -114,6 +132,7 @@ bool WaveRenderer::initialize() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
+    std::cout << "WaveRenderer initialized successfully" << std::endl;
     return true;
 }
 
@@ -215,6 +234,16 @@ void WaveRenderer::render(int screenWidth, int screenHeight) {
     shaderManager->setVec3("lightPos", 2.0f, 5.0f, 2.0f);
     shaderManager->setVec3("viewPos", camX, camY, camZ);
     
+    // Debug output (only occasionally to avoid spam)
+    static int debugCounter = 0;
+    if (debugCounter % 60 == 0) { // Every 60 frames (1 second at 60fps)
+        std::cout << "Render debug - Time: " << time 
+                  << ", WaveHeight: " << waveHeight 
+                  << ", Camera: (" << camX << ", " << camY << ", " << camZ << ")"
+                  << ", IndexCount: " << indexCount << std::endl;
+    }
+    debugCounter++;
+    
     // Render the wave mesh
     glBindVertexArray(VAO);
     checkGLError("glBindVertexArray before draw");
@@ -224,4 +253,17 @@ void WaveRenderer::render(int screenWidth, int screenHeight) {
     
     glBindVertexArray(0);
     checkGLError("glBindVertexArray after draw");
+}
+
+bool WaveRenderer::loadWaveShaders() {
+    delete shaderManager;
+    shaderManager = new ShaderManager();
+    
+    if (!shaderManager->loadShaders("shaders/wave.vert", "shaders/wave.frag")) {
+        std::cerr << "Failed to load wave shaders" << std::endl;
+        return false;
+    }
+    
+    std::cout << "Wave shaders loaded successfully" << std::endl;
+    return true;
 }

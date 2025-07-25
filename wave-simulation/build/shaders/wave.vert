@@ -33,22 +33,32 @@ void main() {
     pos.y = (wave1 * 0.5 + wave2 * 0.3 + mouseWave) * waveHeight;
     
     // Calculate normal (approximate)
-    float delta = 0.1;
-    vec3 neighborX = vec3(pos.x + delta, pos.y, pos.z);
-    vec3 neighborZ = vec3(pos.x, pos.y, pos.z + delta);
+    float delta = 0.01;
+    vec3 neighborX = vec3(pos.x + delta, 0.0, pos.z);
+    vec3 neighborZ = vec3(pos.x, 0.0, pos.z + delta);
     
-    // Recalculate heights for neighbors
+    // Recalculate heights for neighbors (including mouse wave)
     float waveX1 = sin(neighborX.x * waveFrequency + time * waveSpeed) * cos(neighborX.z * waveFrequency + time * waveSpeed * 0.8);
     float waveX2 = sin(neighborX.x * waveFrequency * 1.7 + time * waveSpeed * 1.3) * sin(neighborX.z * waveFrequency * 1.3 + time * waveSpeed);
-    neighborX.y = (waveX1 * 0.5 + waveX2 * 0.3) * waveHeight;
+    float mouseWaveX = 0.0;
+    if (mousePressed > 0.5) {
+        float mouseDistX = distance(neighborX.xz, mousePos);
+        mouseWaveX = sin(mouseDistX * 10.0 - time * 8.0) * exp(-mouseDistX * 2.0) * 0.5;
+    }
+    neighborX.y = (waveX1 * 0.5 + waveX2 * 0.3 + mouseWaveX) * waveHeight;
     
     float waveZ1 = sin(neighborZ.x * waveFrequency + time * waveSpeed) * cos(neighborZ.z * waveFrequency + time * waveSpeed * 0.8);
     float waveZ2 = sin(neighborZ.x * waveFrequency * 1.7 + time * waveSpeed * 1.3) * sin(neighborZ.z * waveFrequency * 1.3 + time * waveSpeed);
-    neighborZ.y = (waveZ1 * 0.5 + waveZ2 * 0.3) * waveHeight;
+    float mouseWaveZ = 0.0;
+    if (mousePressed > 0.5) {
+        float mouseDistZ = distance(neighborZ.xz, mousePos);
+        mouseWaveZ = sin(mouseDistZ * 10.0 - time * 8.0) * exp(-mouseDistZ * 2.0) * 0.5;
+    }
+    neighborZ.y = (waveZ1 * 0.5 + waveZ2 * 0.3 + mouseWaveZ) * waveHeight;
     
-    vec3 tangentX = normalize(neighborX - pos);
-    vec3 tangentZ = normalize(neighborZ - pos);
-    Normal = normalize(cross(tangentZ, tangentX));
+    vec3 tangentX = neighborX - pos;
+    vec3 tangentZ = neighborZ - pos;
+    Normal = normalize(cross(tangentX, tangentZ));
     
     FragPos = pos;
     Height = pos.y;

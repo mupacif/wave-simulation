@@ -45,6 +45,7 @@ public:
     void setWaveSpeed(float speed) { waveSpeed = speed; }
     void setWaveHeight(float height) { waveHeight = height; }
     void setWaveFrequency(float frequency) { waveFrequency = frequency; }
+    bool loadWaveShaders();
 };
 
 #endif
