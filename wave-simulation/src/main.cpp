@@ -27,8 +27,10 @@ int main(int argc, char** argv) {
     al_init_ttf_addon();
     
     // Set OpenGL attributes
-    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_OPENGL_3_0);
+    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_OPENGL_3_0 | ALLEGRO_PROGRAMMABLE_PIPELINE);
     al_set_new_display_option(ALLEGRO_DEPTH_SIZE, 24, ALLEGRO_REQUIRE);
+    al_set_new_display_option(ALLEGRO_OPENGL_MAJOR_VERSION, 3, ALLEGRO_REQUIRE);
+    al_set_new_display_option(ALLEGRO_OPENGL_MINOR_VERSION, 3, ALLEGRO_REQUIRE);
     
     // Create display
     ALLEGRO_DISPLAY* display = al_create_display(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -123,6 +125,10 @@ int main(int argc, char** argv) {
                         waveFrequency = std::max(waveFrequency - 0.5f, 1.0f);
                         waveRenderer.setWaveFrequency(waveFrequency);
                         break;
+                    case ALLEGRO_KEY_SPACE:
+                        std::cout << "Switching to wave shaders..." << std::endl;
+                        waveRenderer.loadWaveShaders();
+                        break;
                 }
                 break;
                 
@@ -168,12 +174,14 @@ int main(int argc, char** argv) {
             al_draw_text(font, al_map_rgb(255, 255, 255), 10, 110, 0, 
                         "Mouse Click - Create Ripples");
             al_draw_text(font, al_map_rgb(255, 255, 255), 10, 130, 0, 
+                        "SPACE - Switch to Wave Shaders");
+            al_draw_text(font, al_map_rgb(255, 255, 255), 10, 150, 0, 
                         "ESC - Exit");
             
             // Display current values
             std::stringstream ss;
             ss << "Speed: " << waveSpeed << " Height: " << waveHeight << " Frequency: " << waveFrequency;
-            al_draw_text(font, al_map_rgb(255, 255, 0), 10, 160, 0, ss.str().c_str());
+            al_draw_text(font, al_map_rgb(255, 255, 0), 10, 180, 0, ss.str().c_str());
             
             al_flip_display();
         }

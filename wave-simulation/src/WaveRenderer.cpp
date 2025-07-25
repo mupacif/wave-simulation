@@ -4,6 +4,10 @@
 #include <iostream>
 #include <sstream>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 WaveRenderer::WaveRenderer() 
     : VAO(0), VBO(0), EBO(0), shaderManager(nullptr),
       vertices(nullptr), indices(nullptr), indexCount(0),
@@ -100,9 +104,18 @@ void WaveRenderer::setupBuffers() {
 bool WaveRenderer::initialize() {
     // Create shader manager
     shaderManager = new ShaderManager();
-    if (!shaderManager->loadShaders("shaders/wave.vert", "shaders/wave.frag")) {
-        std::cerr << "Failed to load shaders" << std::endl;
-        return false;
+    
+    // First try with simple test shaders to verify the pipeline
+    if (!shaderManager->loadShaders("shaders/test.vert", "shaders/test.frag")) {
+        std::cerr << "Failed to load test shaders, trying wave shaders..." << std::endl;
+        
+        // If test shaders fail, try the wave shaders
+        if (!shaderManager->loadShaders("shaders/wave.vert", "shaders/wave.frag")) {
+            std::cerr << "Failed to load wave shaders" << std::endl;
+            return false;
+        }
+    } else {
+        std::cout << "Test shaders loaded successfully" << std::endl;
     }
     
     // Generate mesh and setup OpenGL buffers
@@ -224,4 +237,17 @@ void WaveRenderer::render(int screenWidth, int screenHeight) {
     
     glBindVertexArray(0);
     checkGLError("glBindVertexArray after draw");
+}
+
+bool WaveRenderer::loadWaveShaders() {
+    delete shaderManager;
+    shaderManager = new ShaderManager();
+    
+    if (!shaderManager->loadShaders("shaders/wave.vert", "shaders/wave.frag")) {
+        std::cerr << "Failed to load wave shaders" << std::endl;
+        return false;
+    }
+    
+    std::cout << "Wave shaders loaded successfully" << std::endl;
+    return true;
 }
